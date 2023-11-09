@@ -17,3 +17,20 @@ func twoSumNaive(nums []int, target int) []int {
 
 	return []int{-1, -1}
 }
+
+// HashMap
+func twoSumHashMap(nums []int, target int) []int {
+	numsMap := make(map[int]int)
+
+	for ind, num := range nums {
+		numsMap[num] = ind
+	}
+
+	for ind, num := range nums {
+		if ind2, ok := numsMap[target-num]; ok && ind != ind2 {
+			return []int{ind, ind2}
+		}
+	}
+
+	return []int{-1, -1}
+}
