@@ -61,6 +61,7 @@ func main() {
 }
 
 // part II
+// eightwo -> 82 not 8wo
 func spelledToNum(lines []string) ([]string, error) {
 	spelled := map[string]int{
 		"one":   1,
@@ -80,22 +81,8 @@ func spelledToNum(lines []string) ([]string, error) {
 
 	for ind, line := range lines {
 
-		for left := 0; left < len(line); left++ {
-			if isNumber(rune(line[left])) {
-				continue
-			}
-			for right := left; right < len(line); right++ {
-				sliced := line[left : right+1]
-				if len(sliced) > maxSpelledLen {
-					break
-				}
-
-				if num, ok := spelled[sliced]; ok {
-					fmt.Println(sliced, right)
-					line = strings.Replace(line, sliced, fmt.Sprintf("%d%c", num, rune(line[right])), 1)
-					break
-				}
-			}
+		for sp, num := range spelled {
+			line = strings.ReplaceAll(line, sp, fmt.Sprintf("%c%d%c", sp[0], num, sp[len(sp)-1]))
 		}
 
 		res[ind] = line
