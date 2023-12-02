@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +17,7 @@ func main() {
 
 	const MAX_REDS, MAX_GREENS, MAX_BLUES = 12, 13, 14
 
-	possibleGames := 0
+	power := 0
 
 	games := []string{}
 	for _, game := range lines {
@@ -25,10 +26,9 @@ func main() {
 		games = append(games, game)
 	}
 
-	for ind, game := range games {
-		gameNum := ind + 1
+	for _, game := range games {
+		minRed, minGreen, minBlue := 0, 0, 0
 		gameSets := strings.Split(game, ";")
-		possible := true
 
 		for _, gameSet := range gameSets {
 			colors := strings.Split(gameSet, ",")
@@ -43,31 +43,24 @@ func main() {
 				}
 				colorName := countColor[1]
 
-				if colorName == "red" && count > MAX_REDS {
-					possible = false
-					break
+				if colorName == "red" {
+					minRed = int(math.Max(float64(minRed), float64(count)))
 				}
-				if colorName == "green" && count > MAX_GREENS {
-					possible = false
-					break
+				if colorName == "green" {
+					minGreen = int(math.Max(float64(minGreen), float64(count)))
 				}
-				if colorName == "blue" && count > MAX_BLUES {
-					possible = false
-					break
+				if colorName == "blue" {
+					minBlue = int(math.Max(float64(minBlue), float64(count)))
 				}
 			}
 
-			if !possible {
-				break
-			}
 		}
 
-		if possible {
-			possibleGames += gameNum
-		}
+		power += minRed * minGreen * minBlue
+
 	}
 
-	fmt.Println("POSSIBLE GAMES: ", possibleGames)
+	fmt.Println("POWER OF SETS: ", power)
 
 }
 
