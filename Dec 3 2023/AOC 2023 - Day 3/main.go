@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	input, err := getInput("sample_input.txt")
+	input, err := getInput("input.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -23,78 +23,90 @@ func main() {
 		}
 	}
 
+	potentialGears := make(map[string][]int)
+
 	sum := 0
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
 			if isNumber(matrix[row][col]) {
 				leftCol := col - 1
 				completeNum := ""
-				hasAdjacentSymbol := false
+				gears := []string{}
 				for col < cols && isNumber(matrix[row][col]) {
 					completeNum = fmt.Sprintf("%s%c", completeNum, matrix[row][col])
 
-					if !hasAdjacentSymbol {
-						// check top
-						if row-1 > -1 && isSymbol(matrix[row-1][col]) {
-							hasAdjacentSymbol = true
-						}
+					// check top
+					if row-1 > -1 && isGear(matrix[row-1][col]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row-1, col))
+					}
 
-						// check bottom
-						if row+1 < rows && isSymbol(matrix[row+1][col]) {
-							hasAdjacentSymbol = true
-						}
+					// check bottom
+					if row+1 < rows && isGear(matrix[row+1][col]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row+1, col))
 					}
 					col++
 				}
 
 				// check left side
-				if !hasAdjacentSymbol && leftCol > -1 {
+				if leftCol > -1 {
 					// top left
-					if row-1 > -1 && isSymbol(matrix[row-1][leftCol]) {
-						hasAdjacentSymbol = true
+					if row-1 > -1 && isGear(matrix[row-1][leftCol]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row-1, leftCol))
 					}
 					// left
-					if isSymbol(matrix[row][leftCol]) {
-						hasAdjacentSymbol = true
+					if isGear(matrix[row][leftCol]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row, leftCol))
 					}
 					// bottom left
-					if row+1 < rows && isSymbol(matrix[row+1][leftCol]) {
-						hasAdjacentSymbol = true
+					if row+1 < rows && isGear(matrix[row+1][leftCol]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row+1, leftCol))
 					}
 				}
 
 				// check right side
-				if !hasAdjacentSymbol && col < cols {
+				if col < cols {
 					// top right
-					if row-1 > -1 && isSymbol(matrix[row-1][col]) {
-						hasAdjacentSymbol = true
+					if row-1 > -1 && isGear(matrix[row-1][col]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row-1, col))
 					}
 					// right
-					if isSymbol(matrix[row][col]) {
-						hasAdjacentSymbol = true
+					if isGear(matrix[row][col]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row, col))
 					}
 					// bottom right
-					if row+1 < rows && isSymbol(matrix[row+1][col]) {
-						hasAdjacentSymbol = true
+					if row+1 < rows && isGear(matrix[row+1][col]) {
+						gears = append(gears, fmt.Sprintf("%d,%d", row+1, col))
 					}
-
 				}
 
-				if hasAdjacentSymbol {
-					// fmt.Println(completeNum)
-					completeNumInt, err := strconv.Atoi(completeNum)
-					if err != nil {
-						panic(err)
-					}
+				completeNumInt, err := strconv.Atoi(completeNum)
+				if err != nil {
+					panic(err)
+				}
 
-					sum += completeNumInt
+				for _, gear := range gears {
+					if nums, ok := potentialGears[gear]; ok {
+						potentialGears[gear] = append(nums, completeNumInt)
+					} else {
+						potentialGears[gear] = []int{completeNumInt}
+					}
 				}
 			}
 		}
 	}
 
+	for _, nums := range potentialGears {
+		if len(nums) == 2 {
+			sum += nums[0] * nums[1]
+		}
+	}
+
 	fmt.Println("SUM: ", sum)
 
+}
+
+func isGear(char rune) bool {
+	return char == '*'
 }
 
 func isSymbol(char rune) bool {
