@@ -15,9 +15,16 @@ func main() {
 		panic(err)
 	}
 
+	cards := len(input)
 	totalPoints := 0
 
-	for _, card := range input {
+	copies := make([]int, cards+1)
+	for ind := 1; ind < cards+1; ind++ {
+		copies[ind] = 1
+	}
+
+	for cardInd, card := range input {
+		cardInd = cardInd + 1
 		// fmt.Println("Card: ", cardInd+1)
 		colonIndex := strings.Index(card, ":")
 		card = strings.TrimSpace(card[colonIndex+1:])
@@ -48,11 +55,25 @@ func main() {
 			}
 		}
 
+		// fmt.Printf("Card %d - %d\n", cardInd, winningNumsFromOurNums)
+
+		last := cardInd + winningNumsFromOurNums
+		for ind := cardInd + 1; ind < len(copies) && ind <= last; ind++ {
+			copies[ind] += copies[cardInd]
+		}
+
 		if winningNumsFromOurNums > 0 {
 			totalPoints += int(math.Pow(2, float64(winningNumsFromOurNums)-1))
 		}
 	}
 
+	totalCopies := 0
+	for _, copy := range copies {
+		totalCopies += copy
+	}
+
+	fmt.Println("Copies: ", copies)
+	fmt.Println("Total copies: ", totalCopies)
 	fmt.Println("Total points: ", totalPoints)
 
 }
