@@ -9,43 +9,60 @@ import (
 )
 
 func main() {
-	input, err := readInput("input.txt")
+	input, err := readInput("sample_input.txt")
 	if err != nil {
 		panic(err)
 	}
 
-	times, err := parseInts(input[0])
+	maxTime, err := parseIntsPartTwo(input[0])
 	if err != nil {
 		panic(err)
 	}
 
-	distances, err := parseInts(input[1])
+	recordDistance, err := parseIntsPartTwo(input[1])
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Time: ", times)
-	fmt.Println("Distance: ", distances)
+	fmt.Println("Time: ", maxTime)
+	fmt.Println("Distance: ", recordDistance)
 
-	races := len(distances)
 	ans := 1
 
-	for race := 0; race < races; race++ {
-		recordsBroken := 0
-		speed, time := 0, times[race]
-
-		for ; speed < times[race]; speed++ {
-			distance := speed * time
-			if distance > distances[race] {
-				recordsBroken++
-			}
-			time--
-		}
-
-		ans *= recordsBroken
-	}
+	ans *= waysToWinBetter(maxTime, recordDistance)
 
 	fmt.Println("Ans: ", ans)
+}
+
+func waysToWin(maxTime, recordDistance int) int {
+	recordsBroken := 0
+	speed, time := 0, maxTime
+
+	for ; speed < maxTime; speed++ {
+		distance := speed * time
+		if distance > recordDistance {
+			recordsBroken++
+		}
+		time--
+	}
+	return recordsBroken
+}
+
+func waysToWinBetter(maxTime, recordDistance int) int {
+	firstWinTime := 0
+	speed, time := 0, maxTime
+
+	for ; speed < maxTime; speed++ {
+		distance := speed * time
+		if distance > recordDistance {
+			firstWinTime = speed
+			break
+		}
+		time--
+	}
+
+	// + 1 is necessary for some reason
+	return maxTime - firstWinTime*2 + 1
 }
 
 func parseInts(str string) ([]int, error) {
@@ -69,6 +86,22 @@ func parseInts(str string) ([]int, error) {
 		}
 	}
 	return out, nil
+}
+
+func parseIntsPartTwo(str string) (int, error) {
+	numStr := ""
+	for _, char := range str {
+		if isNum(char) {
+			numStr = fmt.Sprintf("%s%c", numStr, char)
+		}
+	}
+
+	num, err := strconv.Atoi(numStr)
+	if err != nil {
+		return -1, err
+	}
+
+	return num, nil
 }
 
 func isNum(char rune) bool {
