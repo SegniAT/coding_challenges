@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	input, err := readInput("input.txt")
+	input, err := readInput("sample_input.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -26,10 +26,16 @@ func main() {
 		seeds = append(seeds, seedInt)
 	}
 
+	seedsRanges := [][]int{}
+	for i := 0; i < len(seeds); i += 2 {
+		seedsRanges = append(seedsRanges, []int{seeds[i], seeds[i] + seeds[i+1] - 1})
+	}
+
 	seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight := [][]int{}, [][]int{}, [][]int{}, [][]int{}
 	lightToTemprature, temperatureToHumidity, humidityToLocation := [][]int{}, [][]int{}, [][]int{}
 
 	context := ""
+
 	for ind, line := range input {
 		if ind == 0 || ind == 1 {
 			continue
@@ -91,7 +97,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("seeds: ", seeds)
+	fmt.Println("seeds: ", seedsRanges)
 	fmt.Println("seed to soil: ", seedToSoil)
 	fmt.Println("soil to fertilizer: ", soilToFertilizer)
 	fmt.Println("fertilizer to water: ", fertilizerToWater)
@@ -99,106 +105,117 @@ func main() {
 	fmt.Println("light to temperature: ", lightToTemprature)
 	fmt.Println("temperature to humidity: ", temperatureToHumidity)
 	fmt.Println("humidity to location: ", humidityToLocation)
-
-	seedLocations := make([]int, len(seeds))
+	fmt.Println()
 	fmt.Println()
 
-	for seedInd, seed := range seeds {
+	// soil
+	soil := modifyRange(seedsRanges, seedToSoil)
+	fmt.Println("soil: ", soil)
 
-		// fmt.Printf("Seed (%d): %d\n", seedInd, seed)
+	// fertilizer
+	fertilizer := modifyRange(soil, soilToFertilizer)
+	fmt.Println("fertilizer: ", fertilizer)
 
-		// soil
-		soil := -1
-		found := false
-		for _, sts := range seedToSoil {
-			soil, found = getDestination(seed, sts)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("soil: ", soil)
+	// water
+	water := modifyRange(fertilizer, fertilizerToWater)
+	fmt.Println("water: ", water)
 
-		// fertilizer
-		fertilizer := -1
-		found = false
-		for _, stf := range soilToFertilizer {
-			fertilizer, found = getDestination(soil, stf)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("fertilizer: ", fertilizer)
+	// light
+	light := modifyRange(water, waterToLight)
+	fmt.Println("light: ", light)
 
-		// water
-		water := -1
-		found = false
-		for _, ftw := range fertilizerToWater {
-			water, found = getDestination(fertilizer, ftw)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("water: ", water)
+	// temperature
+	temperature := modifyRange(light, lightToTemprature)
+	fmt.Println("temperature: ", temperature)
 
-		// light
-		light := -1
-		found = false
-		for _, wtl := range waterToLight {
-			light, found = getDestination(water, wtl)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("light: ", light)
+	// humidity
+	humidity := modifyRange(temperature, temperatureToHumidity)
+	fmt.Println("humidity: ", humidity)
 
-		// temperature
-		temperature := -1
-		found = false
-		for _, ltt := range lightToTemprature {
-			temperature, found = getDestination(light, ltt)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("temperature: ", temperature)
+	// location
+	location := modifyRange(humidity, humidityToLocation)
+	fmt.Println("location: ", location)
 
-		// humidity
-		humidity := -1
-		found = false
-		for _, tth := range temperatureToHumidity {
-			humidity, found = getDestination(temperature, tth)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("humidity: ", humidity)
+	minLocation := math.MaxInt
 
-		// location
-		location := -1
-		found = false
-		for _, htl := range humidityToLocation {
-			location, found = getDestination(humidity, htl)
-			if found {
-				break
-			}
-		}
-		// fmt.Println("location: ", location)
-		// fmt.Println()
-
-		seedLocations[seedInd] = location
-	}
-
-	minSeedLocation := math.MaxInt
-
-	for _, seedLocation := range seedLocations {
-		if seedLocation < minSeedLocation {
-			minSeedLocation = seedLocation
+	for _, loc := range location {
+		if loc[0] < minLocation {
+			minLocation = loc[0]
 		}
 	}
 
-	fmt.Println("Seed locations: ", seedLocations)
-	fmt.Println("Min seed location: ", minSeedLocation)
-	// Attempt 1 : 910845529
+	fmt.Println("Minimum Location: ", minLocation)
+	// 57020831 - too low
+}
+
+func modifyRange(srcRanges [][]int, mappings [][]int) (destRanges [][]int) {
+	for i := 0; i < len(srcRanges); i++ {
+		srcRange := srcRanges[i]
+		srcXok, srcYok := -1, -1
+		mostRangeContained, mostRangeContainedInd := -1, -1
+		for ind, mapping := range mappings {
+			start, end := mapping[1], mapping[1]+mapping[2]-1
+
+			if start <= srcRange[0] && srcRange[0] <= end {
+				srcXok = ind
+			}
+
+			if start <= srcRange[1] && srcRange[1] <= end {
+				srcYok = ind
+			}
+
+			if srcRange[0] < start && end < srcRange[1] {
+				if end-start > mostRangeContained {
+					mostRangeContainedInd = ind
+					mostRangeContained = end - start
+				}
+			}
+
+		}
+
+		if srcXok != -1 {
+			candidateMapping := mappings[srcXok]
+
+			_, end := candidateMapping[1], candidateMapping[1]+candidateMapping[2]-1
+
+			if srcRange[1] <= end {
+				destRanges = append(destRanges, convRange(srcRange, candidateMapping))
+			} else {
+				srcRanges = append(srcRanges, []int{end + 1, srcRange[1]})
+				destRanges = append(destRanges, convRange([]int{srcRange[0], end}, candidateMapping))
+			}
+		} else if srcYok != -1 {
+			candidateMapping := mappings[srcYok]
+			start, _ := candidateMapping[1], candidateMapping[1]+candidateMapping[2]-1
+
+			srcRanges = append(srcRanges, convRange([]int{start, srcRange[1]}, candidateMapping))
+			srcRanges = append(srcRanges, []int{srcRange[0], start - 1})
+		}
+
+		if srcXok == -1 && srcYok == -1 {
+			if mostRangeContainedInd != -1 {
+				candidateMapping := mappings[mostRangeContainedInd]
+				start, end := candidateMapping[1], candidateMapping[1]+candidateMapping[2]-1
+
+				destRanges = append(destRanges, []int{srcRange[0], start - 1})
+				destRanges = append(destRanges, candidateMapping)
+				destRanges = append(destRanges, []int{end + 1, srcRange[1]})
+
+			} else {
+				destRanges = append(destRanges, srcRange)
+			}
+		}
+
+	}
+	return
+}
+
+func convRange(src []int, mapping []int) (dest []int) {
+	dest = make([]int, 2)
+	dest[0], _ = getDestination(src[0], mapping)
+	dest[1], _ = getDestination(src[1], mapping)
+	dest[1]--
+	return
 }
 
 func getDestination(source int, mapping []int) (int, bool) {
@@ -209,22 +226,6 @@ func getDestination(source int, mapping []int) (int, bool) {
 	}
 
 	return source, false
-}
-
-func mapNums(mapping string) ([]int, error) {
-	mappingNums := strings.Split(mapping, " ")
-	out := make([]int, 3)
-
-	for ind, mappingNum := range mappingNums {
-		num, err := strconv.Atoi(mappingNum)
-		if err != nil {
-			return nil, err
-		}
-
-		out[ind] = num
-	}
-
-	return out, nil
 }
 
 func readInput(src string) ([]string, error) {
@@ -239,6 +240,22 @@ func readInput(src string) ([]string, error) {
 
 	for scanner.Scan() {
 		out = append(out, scanner.Text())
+	}
+
+	return out, nil
+}
+
+func mapNums(mapping string) ([]int, error) {
+	mappingNums := strings.Split(mapping, " ")
+	out := make([]int, 3)
+
+	for ind, mappingNum := range mappingNums {
+		num, err := strconv.Atoi(mappingNum)
+		if err != nil {
+			return nil, err
+		}
+
+		out[ind] = num
 	}
 
 	return out, nil
