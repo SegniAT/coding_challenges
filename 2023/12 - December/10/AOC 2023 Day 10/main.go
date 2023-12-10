@@ -69,6 +69,7 @@ func main() {
 
 	startNeighbours := getValidNeighbours(input, start)
 	distances := make(map[string]int)
+	distances[coordToString(start)] = 0
 
 	for _, startNeighbour := range startNeighbours {
 		currCoord := startNeighbour
@@ -145,6 +146,60 @@ func main() {
 	}
 
 	fmt.Println("Max distance: ", maxDistance)
+
+	startTile := '.'
+	startNeighbour1, startNeighbour2 := startNeighbours[0], startNeighbours[1]
+	diff1 := []int{startNeighbour1[0] - start[0], startNeighbour1[1] - start[1]}
+	diff2 := []int{startNeighbour2[0] - start[0], startNeighbour2[1] - start[1]}
+
+	// up
+	if diff1[0] == diff2[0] {
+		startTile = '|'
+	}
+
+	if diff1[1] == diff2[1] {
+		startTile = '-'
+	}
+
+	// F - 7 - J - L
+	if (sameCoords(diff1, []int{1, 0}) && sameCoords(diff2, []int{0, 1})) ||
+		(sameCoords(diff1, []int{0, 1}) && sameCoords(diff2, []int{1, 0})) {
+		startTile = 'F'
+	} else if (sameCoords(diff1, []int{1, 0}) && sameCoords(diff2, []int{0, -1})) ||
+		(sameCoords(diff1, []int{0, -1}) && sameCoords(diff2, []int{1, 0})) {
+		startTile = '7'
+	} else if (sameCoords(diff1, []int{-1, 0}) && sameCoords(diff2, []int{0, -1})) ||
+		(sameCoords(diff1, []int{0, -1}) && sameCoords(diff2, []int{-1, 0})) {
+		startTile = 'J'
+	} else if (sameCoords(diff1, []int{-1, 0}) && sameCoords(diff2, []int{0, 1})) ||
+		(sameCoords(diff1, []int{0, 1}) && sameCoords(diff2, []int{-1, 0})) {
+		startTile = 'L'
+	}
+
+	input[start[0]][start[1]] = startTile
+
+	enclosedTiles := 0
+
+	for row := 0; row < rows; row++ {
+		verticalsToLeft := 0
+		for col := 0; col < cols; col++ {
+			tile := input[row][col]
+			if _, ok := distances[coordToString([]int{row, col})]; !ok || tile == '.' {
+				if verticalsToLeft%2 == 1 {
+					enclosedTiles++
+				}
+			} else {
+				if tile == 'J' || tile == 'L' || tile == '|' {
+					verticalsToLeft++
+				}
+
+			}
+		}
+
+		// fmt.Println("ROW: ", row, enclosedTiles)
+	}
+
+	fmt.Println("Enclosed tiles: ", enclosedTiles)
 
 }
 
