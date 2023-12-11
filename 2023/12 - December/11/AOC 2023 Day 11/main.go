@@ -19,43 +19,41 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Input: ")
-	prettyPrint(input)
+	// fmt.Println("Input: ")
+	// prettyPrint(input)
 
 	fmt.Println()
 
-	expanded := expandSpace(input)
-	prettyPrint(expanded)
+	expandedRowInd, expandedColInd := spaceExpandedIndexes(input, 1_000_000)
 
-	rows, cols := len(expanded), len(expanded[0])
-	galaxiesCoord := make(map[string][]int)
+	rows, cols := len(input), len(input[0])
+	galaxyIndexes := [][]int{}
 
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
-			if expanded[row][col] == GALAXY {
-				galaxiesCoord[fmt.Sprintf("%d", len(galaxiesCoord)+1)] = []int{row, col}
+			if input[row][col] == GALAXY {
+				galaxyIndexes = append(galaxyIndexes, []int{expandedRowInd[row], expandedColInd[col]})
 			}
 		}
 	}
 
-	galaxies := make([]string, len(galaxiesCoord))
-	for i := 0; i < len(galaxiesCoord); i++ {
-		galaxies[i] = fmt.Sprintf("%d", i+1)
-	}
-	fmt.Println(galaxiesCoord)
+	// fmt.Println(galaxyIndexes)
 
 	sumOfLengths := 0
-	for i := 0; i < len(galaxies); i++ {
-		for j := i + 1; j < len(galaxies); j++ {
-			galaxyOne, galaxyTwo := galaxiesCoord[fmt.Sprintf("%d", i+1)], galaxiesCoord[fmt.Sprintf("%d", j+1)]
-			xDiff := int(math.Abs(float64(galaxyOne[0]) - float64(galaxyTwo[0])))
-			yDiff := int(math.Abs(float64(galaxyOne[1]) - float64(galaxyTwo[1])))
-
-			sumOfLengths += xDiff + yDiff
+	for i := 0; i < len(galaxyIndexes); i++ {
+		for j := i + 1; j < len(galaxyIndexes); j++ {
+			galaxyOne, galaxyTwo := galaxyIndexes[i], galaxyIndexes[j]
+			sumOfLengths += getDistance(galaxyOne, galaxyTwo)
 		}
 	}
 
 	fmt.Println("SUM OF LENGTHS: ", sumOfLengths)
+}
+
+func getDistance(coordOne, coordTwo []int) int {
+	xDiff := int(math.Abs(float64(coordOne[0]) - float64(coordTwo[0])))
+	yDiff := int(math.Abs(float64(coordOne[1]) - float64(coordTwo[1])))
+	return xDiff + yDiff
 }
 
 func expandSpace(matrix [][]rune) (out [][]rune) {
@@ -88,6 +86,49 @@ func expandSpace(matrix [][]rune) (out [][]rune) {
 	}
 
 	return out
+}
+
+func spaceExpandedIndexes(matrix [][]rune, expansionSize int) ([]int, []int) {
+	rows, cols := len(matrix), len(matrix[0])
+	rowGalaxyPrefixSum, colGalaxyPrefixSum := make([]int, rows), make([]int, cols)
+
+	galaxyRows, galaxyCols := make([]bool, rows), make([]bool, cols)
+
+	// mark galaxy rows and columns
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			if matrix[row][col] == GALAXY {
+				galaxyRows[row] = true
+				galaxyCols[col] = true
+			}
+		}
+	}
+
+	for row := 0; row < rows; row++ {
+		ind := 0
+		for col := 0; col < cols; col++ {
+			colGalaxyPrefixSum[col] = ind
+			if !galaxyCols[col] {
+				ind += expansionSize
+			} else {
+				ind++
+			}
+		}
+	}
+
+	for col := 0; col < cols; col++ {
+		ind := 0
+		for row := 0; row < rows; row++ {
+			rowGalaxyPrefixSum[row] = ind
+			if !galaxyRows[row] {
+				ind += expansionSize
+			} else {
+				ind++
+			}
+		}
+	}
+
+	return rowGalaxyPrefixSum, colGalaxyPrefixSum
 }
 
 func prettyPrint(matrix [][]rune) {
