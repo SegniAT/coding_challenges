@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 )
@@ -37,32 +38,55 @@ func main() {
 		panic(err)
 	}
 
-	prettyPrint(input)
+	rows, cols := len(input), len(input[0])
 
-	// cell - direction
-	visitedCells := make(map[string][]Direction)
+	// prettyPrint(input)
 
-	walk(&input, &visitedCells, []int{0, 0}, RIGHT)
+	maxEnergizedCells := math.MinInt
 
-	fmt.Println("Energized cells: ", len(visitedCells))
+	// top
+	for col := 0; col < cols; col++ {
+		visitedCells := make(map[string][]Direction)
+		walk(&input, &visitedCells, []int{0, col}, DOWN)
+		if len(visitedCells) > maxEnergizedCells {
+			maxEnergizedCells = len(visitedCells)
+		}
+	}
+
+	// left
+	for row := 0; row < rows; row++ {
+		visitedCells := make(map[string][]Direction)
+		walk(&input, &visitedCells, []int{row, 0}, RIGHT)
+		if len(visitedCells) > maxEnergizedCells {
+			maxEnergizedCells = len(visitedCells)
+		}
+	}
+
+	// bottom
+	for col := 0; col < cols; col++ {
+		visitedCells := make(map[string][]Direction)
+		walk(&input, &visitedCells, []int{rows - 1, col}, UP)
+		if len(visitedCells) > maxEnergizedCells {
+			maxEnergizedCells = len(visitedCells)
+		}
+	}
+
+	// right
+	for row := 0; row < rows; row++ {
+		visitedCells := make(map[string][]Direction)
+		walk(&input, &visitedCells, []int{row, cols - 1}, LEFT)
+		if len(visitedCells) > maxEnergizedCells {
+			maxEnergizedCells = len(visitedCells)
+		}
+	}
+
+	fmt.Println("Max energized cells: ", maxEnergizedCells)
 	// Part I
 	// First Attempt: 8021 (DONE!!!)
 
 	// Part II
+	// First Attempt: 8216 (DONE!!!!!!)
 
-	for row := 0; row < len(input); row++ {
-		for col := 0; col < len(input[0]); col++ {
-			if _, ok := visitedCells[coordStr([]int{row, col})]; ok {
-				input[row][col] = '#'
-			} else {
-				input[row][col] = '.'
-			}
-		}
-	}
-
-	fmt.Println()
-
-	prettyPrint(input)
 }
 
 func walk(matrix *[][]rune, visitedCells *map[string][]Direction, coord []int, dir Direction) {
