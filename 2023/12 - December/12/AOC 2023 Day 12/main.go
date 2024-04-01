@@ -25,10 +25,13 @@ func main() {
 		panic(err)
 	}
 
+	memo := make(map[string]int)
+
 	sum := 0
 	for _, inp := range input {
 		// fmt.Println(inp.record, inp.damaged)
-		arrangements := countArrangements(inp.record, inp.damaged)
+		multiply(&inp)
+		arrangements := countArrangements(inp.record, inp.damaged, &memo)
 		sum += arrangements
 		// fmt.Println(arrangements)
 		// fmt.Println()
@@ -40,18 +43,23 @@ func main() {
 	// Attempt 2: 7633
 
 	// PART II
-	// Attempt 1: 
+	// Attempt 1: 22557823541987 (too low)
+	// Attempt 2: 22031404990199
 }
 
-/*
-.??..##.??#??##? [2 2 2 2]
-2
+func multiply(record *Record) {
+	initRecord, initDamaged := record.record, record.damaged
+	for i := 0; i < 4; i++ {
+		record.record = fmt.Sprintf("%s%c%s", record.record, '?', initRecord)
+		record.damaged = append(record.damaged, initDamaged...)
+	}
+}
 
-?.?#?..##?.?.. [1 2]
-3
-*/
+func countArrangements(record string, damaged []int, memo *map[string]int) int {
+	if res, ok := (*memo)[fmt.Sprintf("%s-%d", record, len(damaged))]; ok {
+		return res
+	}
 
-func countArrangements(record string, damaged []int) int {
 	if record == "" {
 		if len(damaged) != 0 {
 			return 0
@@ -69,8 +77,10 @@ func countArrangements(record string, damaged []int) int {
 		}
 
 		if damagedFound {
+			(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = 0
 			return 0
 		} else {
+			(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = 1
 			return 1
 		}
 	}
@@ -80,7 +90,9 @@ func countArrangements(record string, damaged []int) int {
 		for ind < len(record) && record[ind] == OPERATIONAL {
 			ind++
 		}
-		return countArrangements(record[ind:], damaged)
+		res := countArrangements(record[ind:], damaged, memo)
+		(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = res
+		return res
 	} else if record[0] == DAMAGED {
 		if len(record) < damaged[0] {
 			return 0
@@ -94,6 +106,7 @@ func countArrangements(record string, damaged []int) int {
 			}
 		}
 		if operationalExists || (i < len(record) && record[i] == DAMAGED) {
+			(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = 0
 			return 0
 		}
 
@@ -104,11 +117,14 @@ func countArrangements(record string, damaged []int) int {
 			newRecord = fmt.Sprintf("%c%s", OPERATIONAL, newRecord[1:])
 		}
 
-		return countArrangements(newRecord, damaged[1:])
+		res := countArrangements(newRecord, damaged[1:], memo)
+		(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = res
+		return res
 	} else {
 		left := fmt.Sprintf("%c%s", OPERATIONAL, record[1:])
 		right := fmt.Sprintf("%c%s", DAMAGED, record[1:])
-		l, r := countArrangements(left, damaged), countArrangements(right, damaged)
+		l, r := countArrangements(left, damaged, memo), countArrangements(right, damaged, memo)
+		(*memo)[fmt.Sprintf("%s-%d", record, len(damaged))] = l + r
 		return l + r
 	}
 }

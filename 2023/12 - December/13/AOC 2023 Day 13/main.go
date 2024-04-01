@@ -14,12 +14,19 @@ func main() {
 
 	ans := 0
 	for _, inp := range input {
+		// if ind == 1 {
+		// 	continue
+		// }
 		ans += bruh(inp)
 	}
 
 	fmt.Println("ANS: ", ans)
 	// PART I
 	// First Attempt: 41859 (😭 thank GOD!)
+
+	// PART II
+	// First Attempt: 28299 (too low)
+	// Second Attempt: 28357 (too low)
 
 }
 
@@ -28,24 +35,54 @@ func bruh(pattern []string) int {
 
 	ans := 0
 
+	globalSmudgeInd := []int{}
 	// check horizontal
 	topInd := -1
 	for i := 1; i < rows; i++ {
 		top, bottom := i-1, i
+		smudgeFound, smudgeInd := false, []int{}
 
-		for top > -1 && bottom < rows && pattern[top] == pattern[bottom] {
+		for top > -1 && bottom < rows {
+			difference, firstDiffInd := diff(pattern[top], pattern[bottom])
+
+			if !smudgeFound && difference == 1 {
+				smudgeFound = true
+				smudgeInd = []int{top, firstDiffInd}
+			} else if difference > 0 {
+				break
+			}
+
 			top--
 			bottom++
 		}
 
-		if top < 0 || bottom >= rows {
+		if top < 0 || bottom >= rows && smudgeFound {
 			topInd = i - 1
+			globalSmudgeInd = smudgeInd
 			break
 		}
 	}
 
 	if topInd != -1 {
 		ans += (topInd + 1) * 100
+	}
+
+	// fix smudge?
+	if len(globalSmudgeInd) > 0 {
+		row, col := globalSmudgeInd[0], globalSmudgeInd[1]
+
+		str := pattern[row]
+
+		newChar := '-'
+		if str[col] == '.' {
+			newChar = '#'
+		} else {
+			newChar = '.'
+		}
+
+		newStr := fmt.Sprintf("%s%c%s", str[:col], newChar, str[col+1:])
+
+		pattern[row] = newStr
 	}
 
 	// check vertical
@@ -65,13 +102,27 @@ func bruh(pattern []string) int {
 	for i := 1; i < cols; i++ {
 		left, right := i-1, i
 
-		for left > -1 && right < cols && colsList[left] == colsList[right] {
+		smudgeFound, smudgeInd := false, []int{}
+		if len(globalSmudgeInd) > 0 {
+			smudgeFound = true
+		}
+
+		for left > -1 && right < cols {
+			difference, firstDiffInd := diff(colsList[left], colsList[right])
+
+			if !smudgeFound && difference == 1 {
+				smudgeFound = true
+				smudgeInd = []int{firstDiffInd, left}
+			} else if difference > 0 {
+				break
+			}
 			left--
 			right++
 		}
 
-		if left < 0 || right >= cols {
+		if left < 0 || right >= cols && smudgeFound {
 			leftInd = i - 1
+			globalSmudgeInd = smudgeInd
 			break
 		}
 	}
@@ -79,8 +130,24 @@ func bruh(pattern []string) int {
 	if leftInd != -1 {
 		ans += leftInd + 1
 	}
+	fmt.Println("globalshit: ", globalSmudgeInd)
 
 	return ans
+}
+
+func diff(str1, str2 string) (int, int) {
+	difference := 0
+	firstDiffInd := -1
+	for i := 0; i < len(str1); i++ {
+		if str1[i] != str2[i] {
+			if firstDiffInd == -1 {
+				firstDiffInd = i
+			}
+			difference++
+		}
+	}
+
+	return difference, firstDiffInd
 }
 
 func loadInput(src string) ([][]string, error) {

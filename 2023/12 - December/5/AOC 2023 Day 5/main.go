@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	input, err := readInput("sample_input.txt")
+	input, err := readInput("input.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -149,10 +149,14 @@ func main() {
 }
 
 func modifyRange(srcRanges [][]int, mappings [][]int) (destRanges [][]int) {
-	for i := 0; i < len(srcRanges); i++ {
-		srcRange := srcRanges[i]
+	newSrcRanges := make([][]int, len(srcRanges))
+	copy(newSrcRanges, srcRanges)
+
+	for i := 0; i < len(newSrcRanges); i++ {
+		srcRange := newSrcRanges[i]
 		srcXok, srcYok := -1, -1
 		mostRangeContained, mostRangeContainedInd := -1, -1
+
 		for ind, mapping := range mappings {
 			start, end := mapping[1], mapping[1]+mapping[2]-1
 
@@ -170,26 +174,24 @@ func modifyRange(srcRanges [][]int, mappings [][]int) (destRanges [][]int) {
 					mostRangeContained = end - start
 				}
 			}
-
 		}
 
 		if srcXok != -1 {
 			candidateMapping := mappings[srcXok]
-
 			_, end := candidateMapping[1], candidateMapping[1]+candidateMapping[2]-1
 
 			if srcRange[1] <= end {
 				destRanges = append(destRanges, convRange(srcRange, candidateMapping))
 			} else {
-				srcRanges = append(srcRanges, []int{end + 1, srcRange[1]})
+				newSrcRanges = append(newSrcRanges, []int{end + 1, srcRange[1]})
 				destRanges = append(destRanges, convRange([]int{srcRange[0], end}, candidateMapping))
 			}
 		} else if srcYok != -1 {
 			candidateMapping := mappings[srcYok]
 			start, _ := candidateMapping[1], candidateMapping[1]+candidateMapping[2]-1
 
-			srcRanges = append(srcRanges, convRange([]int{start, srcRange[1]}, candidateMapping))
-			srcRanges = append(srcRanges, []int{srcRange[0], start - 1})
+			newSrcRanges = append(newSrcRanges, convRange([]int{start, srcRange[1]}, candidateMapping))
+			newSrcRanges = append(newSrcRanges, []int{srcRange[0], start - 1})
 		}
 
 		if srcXok == -1 && srcYok == -1 {
@@ -200,14 +202,13 @@ func modifyRange(srcRanges [][]int, mappings [][]int) (destRanges [][]int) {
 				destRanges = append(destRanges, []int{srcRange[0], start - 1})
 				destRanges = append(destRanges, candidateMapping)
 				destRanges = append(destRanges, []int{end + 1, srcRange[1]})
-
 			} else {
 				destRanges = append(destRanges, srcRange)
 			}
 		}
-
 	}
-	return
+
+	return destRanges
 }
 
 func convRange(src []int, mapping []int) (dest []int) {
