@@ -37,6 +37,8 @@ func helper(questions [][]int, ind int, dp *map[int]int64) int64 {
 
 */
 
+// BOTTOM UP = NOT WORKING
+
 func mostPoints(questions [][]int) int64 {
 	size := len(questions)
 	dp := make([]int64, len(questions))
